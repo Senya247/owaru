@@ -1,0 +1,5 @@
+build/
+libs/*
+
+compile_commands.json
+.env
