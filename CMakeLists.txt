@@ -16,6 +16,7 @@ set(SOURCES
     main.cpp
     src/owaru.cpp
     src/commands.cpp
+    src/rcon.cpp
 )
 
 # Create an executable

@@ -7,9 +7,29 @@
 #include <vector>
 
 namespace Owaru {
+class Owaru;
 namespace Commands {
 
-void ping(const dpp::slashcommand_t &event) { event.reply("Pong"); }
+void ping(const dpp::slashcommand_t &event, Owaru &instance) {
+    event.reply("Pong");
+}
+
+void rcon_send(const dpp::slashcommand_t &event, Owaru &instance) {
+    if (!instance.is_rconned()) {
+        event.reply("RCON has not been initialized");
+        return;
+    }
+
+    std::string command = std::get<std::string>(event.get_parameter("command"));
+    if (command.empty())
+        return;
+
+    std::optional<std::string> response = instance.rcon_send(command);
+    if (response)
+        event.reply(response.value());
+    else
+        event.reply("Sent");
+}
 
 } // namespace Commands
 } // namespace Owaru
