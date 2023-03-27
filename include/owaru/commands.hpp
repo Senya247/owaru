@@ -24,6 +24,12 @@ struct owaru_command {
 void ping(const dpp::slashcommand_t &event, Owaru &instance);
 
 void rcon_send(const dpp::slashcommand_t &event, Owaru &instance);
+
+void test(const dpp::slashcommand_t &event, Owaru &instance);
+
+void vc_join(const dpp::slashcommand_t &event, Owaru &instance);
+
+void vc_play(const dpp::slashcommand_t &event, Owaru &instance);
 } // namespace Commands
 
 } // namespace Owaru

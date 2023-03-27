@@ -1,13 +1,32 @@
+#include <filesystem>
+#include <mpg123.h>
 #include <owaru/commands.hpp>
 #include <owaru/owaru.hpp>
 #include <string>
 
+namespace fs = std::filesystem;
+
 namespace Owaru {
 std::string Owaru::get_token() { return _token; }
 
-Owaru::Owaru(const std::string &token) : dpp::cluster(token) {}
+Owaru::Owaru(const std::string &token) : dpp::cluster(token) {
+    _mpg_handle = mpg123_new(NULL, &_mpg_err);
+}
+Owaru::~Owaru() { _rcon.disconnect(); }
 
-bool Owaru::is_rconned() { return _is_rconned; }
+fs::path Owaru::get_audio_path() { return _audio_path; }
+
+void Owaru::set_audio_path(const fs::path path) {
+    _audio_samples.clear();
+    _audio_path = path;
+
+    for (const auto &entry : fs::directory_iterator(path))
+        _audio_samples.push_back(entry.path());
+}
+
+const std::vector<fs::path> &Owaru::get_audio_samples() {
+    return _audio_samples;
+}
 
 void Owaru::add_command(std::string name,
                         struct Commands::owaru_command command) {
@@ -38,6 +57,8 @@ void Owaru::call_command(std::string call_name,
     }
     std::cout << "Called " << call_name << std::endl;
 }
+
+bool Owaru::is_rconned() { return _is_rconned; }
 
 void Owaru::rcon_init(std::string host, int port, const std::string &password) {
     if (_is_rconned)

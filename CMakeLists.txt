@@ -10,6 +10,7 @@ add_subdirectory(libs/cpr)
 add_subdirectory(libs/fmt)
 add_subdirectory(libs/json)
 add_subdirectory(libs/cpp-dotenv)
+add_subdirectory(libs/rapidfuzz-cpp)
 # You can also add any other libs you want to use
  
 set(SOURCES
@@ -29,6 +30,8 @@ target_link_libraries(${PROJECT_NAME}
     fmt
     nlohmann_json
     cpp_dotenv
+    rapidfuzz
+    -lmpg123
 )
  
 # Specify includes
@@ -38,6 +41,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     libs/fmt/include
     libs/json/include
     libs/cpp-dotenv/include
+    libs/rapidfuzz-cpp/rapidfuzz
 
     include
 )
