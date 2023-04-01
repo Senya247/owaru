@@ -15,13 +15,18 @@ add_subdirectory(libs/rapidfuzz-cpp)
  
 set(SOURCES
     main.cpp
-    src/owaru.cpp
-    src/commands.cpp
-    src/rcon.cpp
+
+    src/owaru/commands.cpp
+    src/owaru/owaru.cpp
+
+    src/command/command.cpp
+
+    src/rcon/rcon.cpp
 )
 
 # Create an executable
 add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(test test.cpp)
  
 # Linking libraries
 target_link_libraries(${PROJECT_NAME}
@@ -46,6 +51,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     include
 )
  
+target_include_directories(test PRIVATE include)
+
 # Set C++ version
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17

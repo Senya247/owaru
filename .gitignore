@@ -1,4 +1,12 @@
+# Build
 build/
 
+# LSP
 compile_commands.json
+.cache
+
+# Sensitive info
 .env
+
+# Testing
+test.cpp

@@ -4,19 +4,20 @@
 #include <functional>
 #include <inttypes.h>
 #include <mpg123.h>
-#include <owaru/commands.hpp>
-#include <owaru/owaru.hpp>
+#include <owaru/command/command.hpp>
+#include <owaru/owaru/owaru.hpp>
 #include <rapidfuzz/fuzz.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace fs = std::filesystem;
-namespace fuzz = rapidfuzz::fuzz;
+
+#define _MESSAGE(CONTENT) _message(CONTENT, event, instance)
 
 namespace Owaru {
 class Owaru;
-namespace Commands {
+namespace Owaru_Commands {
 
 /* Convenience function, send message to channel*/
 auto _message(const std::string &content, const dpp::slashcommand_t &event,
@@ -44,8 +45,7 @@ void _stream_audio(dpp::voiceconn &voiceconn, const fs::path &path) {
     std::vector<uint8_t> pcm_data;
 
     if (!fs::exists(path)) {
-        std::cerr << "Path " << fs::canonical(path) << " does not exist"
-                  << std::endl;
+        std::cerr << "Path " << path.string() << " does not exist" << std::endl;
         return;
     }
     std::cout << "Playing " << fs::canonical(path) << std::endl;
@@ -59,12 +59,10 @@ void _stream_audio(dpp::voiceconn &voiceconn, const fs::path &path) {
     mpg123_open(handle, fs::canonical(path).c_str());
     mpg123_getformat(handle, &rate, &channels, &encoding);
 
-    unsigned int counter = 0;
     for (int total = 0;
          mpg123_read(handle, buffer, buffer_size, &done) == MPG123_OK;) {
         for (auto i = 0; i < buffer_size; i++)
             pcm_data.push_back(buffer[i]);
-        counter += buffer_size;
         total += done;
     }
     delete buffer;
@@ -77,11 +75,10 @@ void _stream_audio(dpp::voiceconn &voiceconn, const fs::path &path) {
                                               pcm_data.size());
 }
 
-#define _MESSAGE(CONTENT) _message(CONTENT, event, instance)
-
 void ping(const dpp::slashcommand_t &event, Owaru &instance) {
     event.reply("Pong");
 }
+Command::Command com_ping("Ping", "ping", "Standard ping command", {}, ping);
 
 void rcon_send(const dpp::slashcommand_t &event, Owaru &instance) {
     if (!instance.is_rconned()) {
@@ -99,6 +96,11 @@ void rcon_send(const dpp::slashcommand_t &event, Owaru &instance) {
     else
         event.reply("Sent");
 }
+Command::Command com_rcon_send("RCON Send", "rcon_send",
+                               "Send command through RCON",
+                               {dpp::command_option(dpp::co_string, "command",
+                                                    "Command to run", true)},
+                               rcon_send);
 
 void test(const dpp::slashcommand_t &event, Owaru &instance) {
     dpp::guild guild = event.command.get_guild();
@@ -107,7 +109,7 @@ void test(const dpp::slashcommand_t &event, Owaru &instance) {
     event.reply(std::to_string(author.id));
 }
 
-void vc_join(const dpp::slashcommand_t &event, Owaru &instance) {
+void vc(const dpp::slashcommand_t &event, Owaru &instance) {
     dpp::guild guild = event.command.get_guild();
     dpp::user author = event.command.get_issuing_user();
 
@@ -150,8 +152,12 @@ dpp::voicestate*/
         if (current_vc->channel_id == author_vc->second.channel_id) {
             event.reply(
                 fmt::format("Disconnecting from <#{}>", author_vc_snowflake));
+            if (current_vc->voiceclient->is_playing())
+                current_vc->voiceclient->stop_audio();
             event.from->disconnect_voice(guild.id);
         } else {
+            if (current_vc->voiceclient->is_playing())
+                current_vc->voiceclient->stop_audio();
             event.from->disconnect_voice(guild.id);
             join_vc = true;
         }
@@ -166,6 +172,8 @@ dpp::voicestate*/
                 fmt::format("Could not join <#{}>", author_vc_snowflake));
     }
 }
+Command::Command com_vc("Voice chat", "vc", "Join or leave a voice chat", {},
+                        vc);
 
 void vc_play(const dpp::slashcommand_t &event, Owaru &instance) {
     static std::map<fs::path, double> audio_score_map;
@@ -185,7 +193,7 @@ dpp::voicestate*/
     /* So discord doesn't say "Applicatino didn't respond"*/
 
     const std::string audio_name =
-        std::get<std::string>(event.get_parameter("name"));
+        std::get<std::string>(event.get_parameter("song"));
     if (audio_name.empty()) {
         event.reply("You must specify an audio name");
         return;
@@ -194,21 +202,28 @@ dpp::voicestate*/
     if (current_vc) {
         if (author_vc != voice_members_map.end()) {
 
+            printf("Hello\n");
             if (instance.get_audio_samples().empty()) {
+
+                printf("Hello1\n");
                 event.reply("Audio samples have not been initialized");
                 return;
             }
+            printf("Hello2\n");
 
             audio_score_map.clear();
             for (const auto &sample : instance.get_audio_samples()) {
                 audio_score_map.emplace(
-                    sample, fuzz::partial_ratio(audio_name,
-                                                sample.filename().string()));
+                    sample, rapidfuzz::fuzz::partial_ratio(
+                                audio_name, sample.filename().string()));
             }
-            auto t = _max(audio_score_map);
-            event.reply(t->first.filename());
 
-            _stream_audio(*event.from->get_voice(guild.id), t->first);
+            auto sample = _max(audio_score_map);
+            event.reply(sample->first.filename());
+
+            if (current_vc->voiceclient->is_playing())
+                current_vc->voiceclient->stop_audio();
+            _stream_audio(*current_vc, sample->first);
 
         } else {
             event.reply("Call /vc first");
@@ -217,6 +232,13 @@ dpp::voicestate*/
         event.reply("Call /vc first");
     }
 }
+Command::Command com_vc_play(
+    "Voice chat play", "play", "Play audio on voice channel",
+    {dpp::command_option(dpp::co_string, "song", "Audio sample to play", true)},
+    vc_play);
 
-} // namespace Commands
+std::vector<Command::Command> owaru_commands = {com_ping, com_vc_play, com_vc,
+                                                com_rcon_send};
+
+} // namespace Owaru_Commands
 } // namespace Owaru
