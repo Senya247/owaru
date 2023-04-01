@@ -1,4 +1,5 @@
 #include "owaru/command/command.hpp"
+#include <csignal>
 #include <dotenv.h>
 #include <dpp/dpp.h>
 #include <filesystem>
@@ -6,7 +7,20 @@
 #include <owaru/owaru/owaru.hpp>
 #include <unordered_map>
 
+Owaru::Owaru *ptr_owaru = NULL;
+
+void signal_handler(int sig)
+{
+    if (ptr_owaru == NULL)
+        exit(1);
+    ptr_owaru->shutdown();
+    ptr_owaru->show_notice("Shut down gracefully");
+    exit(0);
+}
+
 int main() {
+    signal(SIGINT, signal_handler);
+
     dotenv::env.load_dotenv();
     const std::string BOT_TOKEN = dotenv::env["TOKEN"];
     const std::string RCON_PASS = dotenv::env["RCON_PASS"];
@@ -18,6 +32,7 @@ int main() {
     }
 
     Owaru::Owaru owaru(BOT_TOKEN);
+    ptr_owaru = &owaru;
     if (!AUDIO_PATH.empty())
         owaru.set_audio_path(AUDIO_PATH);
 
