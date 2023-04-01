@@ -1,18 +1,48 @@
 # minimum CMake version required
 cmake_minimum_required(VERSION 3.15)
-# Project name, version and description
-project(owaru VERSION 1.0 DESCRIPTION "A Discord Bot")
+
+project(owaru VERSION 1.0 DESCRIPTION "Owaru")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
  
-# Add DPP as dependency
-add_subdirectory(libs/DPP)
-add_subdirectory(libs/cpr)
-add_subdirectory(libs/fmt)
-add_subdirectory(libs/json)
-add_subdirectory(libs/cpp-dotenv)
-add_subdirectory(libs/rapidfuzz-cpp)
-# You can also add any other libs you want to use
- 
+include(FetchContent)
+
+FetchContent_Declare(dpp
+    GIT_REPOSITORY      https://github.com/brainboxdotcc/DPP.git
+    GIT_TAG             master
+) 
+
+FetchContent_Declare(cpr
+    GIT_REPOSITORY      https://github.com/libcpr/cpr.git
+    GIT_TAG             master
+) 
+
+FetchContent_Declare(fmt
+    GIT_REPOSITORY      https://github.com/fmtlib/fmt.git
+    GIT_TAG             master
+) 
+
+FetchContent_Declare(json
+    GIT_REPOSITORY      https://github.com/nlohmann/json.git
+    GIT_TAG             master
+) 
+
+FetchContent_Declare(cpp-dotenv
+    GIT_REPOSITORY      https://github.com/Senya247/cpp-dotenv.git
+    GIT_TAG             master
+) 
+
+FetchContent_Declare(rapidfuzz-cpp
+    GIT_REPOSITORY      https://github.com/maxbachmann/rapidfuzz-cpp.git
+    GIT_TAG             main
+) 
+
+FetchContent_MakeAvailable(dpp)
+FetchContent_MakeAvailable(cpr)
+FetchContent_MakeAvailable(fmt)
+FetchContent_MakeAvailable(json)
+FetchContent_MakeAvailable(cpp-dotenv)
+FetchContent_MakeAvailable(rapidfuzz-cpp)
+
 set(SOURCES
     main.cpp
 
@@ -24,11 +54,9 @@ set(SOURCES
     src/rcon/rcon.cpp
 )
 
-# Create an executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 add_executable(test test.cpp)
  
-# Linking libraries
 target_link_libraries(${PROJECT_NAME}
     dpp
     cpr
@@ -39,7 +67,6 @@ target_link_libraries(${PROJECT_NAME}
     -lmpg123
 )
  
-# Specify includes
 target_include_directories(${PROJECT_NAME} PRIVATE
     libs/DPP/include
     libs/cpr/include
@@ -53,7 +80,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
  
 target_include_directories(test PRIVATE include)
 
-# Set C++ version
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
