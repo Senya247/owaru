@@ -55,7 +55,6 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-add_executable(test test.cpp)
  
 target_link_libraries(${PROJECT_NAME}
     dpp
@@ -78,7 +77,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     include
 )
  
-target_include_directories(test PRIVATE include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
