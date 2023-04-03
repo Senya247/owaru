@@ -6,15 +6,15 @@ namespace Owaru {
 class Owaru;
 namespace Command {
 
-Command::Command(std::string name, std::string call_name,
-                 std::string description,
-                 std::vector<dpp::command_option> options,
-                 owaru_function_type function)
+Command::Command(const std::string &name, const std::string &call_name,
+                 const std::string &description,
+                 const std::vector<dpp::command_option> &options)
     : _name(name), _call_name(call_name), _description(description),
-      _options(options), _function(function) {}
+      _options(options) {}
+void Command::operator()(const dpp::slashcommand_t &event) {}
 
 void Command::set_instance(Owaru *instance) { _instance = instance; }
-const Owaru * Command::get_instance() const {return _instance;}
+const Owaru *Command::get_instance() const { return _instance; }
 
 std::string Command::get_name() const { return _name; }
 
@@ -28,10 +28,6 @@ void Command::add_option(const dpp::command_option &option) {
 
 const std::vector<dpp::command_option> &Command::get_options() const {
     return _options;
-}
-
-void Command::call(const dpp::slashcommand_t &event) {
-    _function(event, *_instance);
 }
 
 } // namespace Command

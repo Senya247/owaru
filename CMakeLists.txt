@@ -46,8 +46,8 @@ FetchContent_MakeAvailable(rapidfuzz-cpp)
 set(SOURCES
     main.cpp
 
-    src/owaru/commands.cpp
     src/owaru/owaru.cpp
+    src/owaru/commands/ping.cpp
 
     src/command/command.cpp
 

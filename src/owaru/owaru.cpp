@@ -56,9 +56,10 @@ const std::vector<fs::path> &Owaru::get_audio_samples() {
 }
 
 void Owaru::add_command(const Command::Command &command) {
-    if (command.get_instance() == NULL)
-    {
-        show_error(fmt::format("Command {} must contain a pointer to Owaru class", command.get_call_name()));
+    if (command.get_instance() == NULL) {
+        show_error(
+            fmt::format("Command {} must contain a pointer to Owaru class",
+                        command.get_call_name()));
         std::exit(1);
     }
     _commands.push_back(command);
@@ -86,7 +87,7 @@ void Owaru::call_command(std::string call_name,
     show_notice(fmt::format("Called {}", call_name));
     for (auto &command : _commands) {
         if (command.get_call_name() == call_name)
-            command.call(event);
+            command(event);
     }
 }
 

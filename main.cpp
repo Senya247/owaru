@@ -1,18 +1,25 @@
-#include "owaru/command/command.hpp"
 #include <csignal>
 #include <dotenv.h>
 #include <dpp/dpp.h>
 #include <filesystem>
-#include <owaru/owaru/commands.hpp>
+#include <fmt/core.h>
+#include <owaru/command/command.hpp>
+#include <owaru/owaru/commands/ping.hpp>
 #include <owaru/owaru/owaru.hpp>
 #include <unordered_map>
 
 Owaru::Owaru *ptr_owaru = NULL;
 
-void signal_handler(int sig)
-{
+void signal_handler(int sig) {
+    if (sig == SIGHUP)
+        return;
+
+    ptr_owaru->show_notice(
+        fmt::format("Received {}, exiting...", strsignal(sig)));
+
     if (ptr_owaru == NULL)
         exit(1);
+
     ptr_owaru->shutdown();
     ptr_owaru->show_notice("Shut down gracefully");
     exit(0);
@@ -20,6 +27,7 @@ void signal_handler(int sig)
 
 int main() {
     signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
 
     dotenv::env.load_dotenv();
     const std::string BOT_TOKEN = dotenv::env["TOKEN"];
@@ -36,7 +44,13 @@ int main() {
     if (!AUDIO_PATH.empty())
         owaru.set_audio_path(AUDIO_PATH);
 
-    for (auto &command : Owaru::Owaru_Commands::owaru_commands) {
+    std::vector<Owaru::Command::Command> coms;
+    {
+        using namespace Owaru::Owaru_Commands;
+        coms = {Ping()};
+    }
+
+    for (auto &command : coms) {
         command.set_instance(&owaru);
         owaru.add_command(command);
     }
